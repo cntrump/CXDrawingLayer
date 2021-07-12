@@ -98,7 +98,11 @@ open class UXLabel: UXDrawingView {
             preferredMaxLayoutWidth = .greatestFiniteMagnitude
         }
 
-        let width = preferredMaxLayoutWidth - contentInset.left - contentInset.right
+        var width = preferredMaxLayoutWidth - contentInset.left - contentInset.right
+
+        if let _ = shadowColor {
+            width -= abs(shadowOffset.width)
+        }
 
         let context = UXTextKitContext(attributedText: renderedAttributedText,
                                        numberOfLines: numberOfLines,
@@ -113,6 +117,11 @@ open class UXLabel: UXDrawingView {
         var size = boundingRect.integral.size
         size.width += contentInset.left + contentInset.right
         size.height += contentInset.top + contentInset.bottom
+
+        if let _ = shadowColor {
+            size.width += abs(shadowOffset.width)
+            size.height += abs(shadowOffset.height)
+        }
 
         preferredMaxLayoutWidth = size.width
 
@@ -135,7 +144,11 @@ open class UXLabel: UXDrawingView {
             return .zero
         }
 
-        let width = size.width - contentInset.left - contentInset.right
+        var width = size.width - contentInset.left - contentInset.right
+
+        if let _ = shadowColor {
+            width -= abs(shadowOffset.width)
+        }
 
         let context = UXTextKitContext(attributedText: renderedAttributedText,
                                        numberOfLines: numberOfLines,
@@ -150,6 +163,11 @@ open class UXLabel: UXDrawingView {
         var size = boundingRect.integral.size
         size.width += contentInset.left + contentInset.right
         size.height += contentInset.top + contentInset.bottom
+
+        if let _ = shadowColor {
+            size.width += abs(shadowOffset.width)
+            size.height += abs(shadowOffset.height)
+        }
 
         return size
     }
@@ -175,7 +193,12 @@ private extension UXLabel {
             let shadow = NSShadow()
             shadow.shadowColor = shadowColor
             shadow.shadowOffset = shadowOffset
-            shadow.shadowBlurRadius = layer?.cornerRadius ?? 0
+            #if os(macOS)
+            let cornerRadius = layer?.cornerRadius ?? 0
+            #else
+            let cornerRadius = layer.cornerRadius
+            #endif
+            shadow.shadowBlurRadius = cornerRadius
             attributes[.shadow] = shadow
         }
 
@@ -197,8 +220,20 @@ class UXLabelDrawingParameter {
 extension UXLabel: CXDrawingLayerDelegate {
 
     public var drawingParameter: Any? {
-        let topLeft = CGPoint(x: contentInset.left, y: contentInset.top)
-        let width = preferredMaxLayoutWidth - contentInset.left - contentInset.right
+        var topLeft = CGPoint(x: contentInset.left, y: contentInset.top)
+        var width = preferredMaxLayoutWidth - contentInset.left - contentInset.right
+
+        if let _ = shadowColor {
+            width -= abs(shadowOffset.width)
+            topLeft.x += max(-shadowOffset.width, 0)
+
+            #if os(macOS)
+            topLeft.y += max(shadowOffset.height, 0)
+            #else
+            topLeft.y += max(-shadowOffset.height, 0)
+            #endif
+        }
+
         let context = UXTextKitContext(attributedText: renderedAttributedText,
                                        numberOfLines: numberOfLines,
                                        lineBreakMode: lineBreakMode,
