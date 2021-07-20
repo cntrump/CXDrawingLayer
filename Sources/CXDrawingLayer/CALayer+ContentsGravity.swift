@@ -31,6 +31,11 @@ public extension CALayer {
 public func CXMakeRect(aspectRatio: CGSize,
                        insideRect boundingRect: CGRect,
                        contentsGravity: CXDrawingContentsGravity) -> CGRect {
+    guard aspectRatio.width > 0, aspectRatio.height > 0,
+          boundingRect.width > 0, boundingRect.height > 0 else {
+        return .zero
+    }
+
     if contentsGravity == .resize {
         return boundingRect
     }
