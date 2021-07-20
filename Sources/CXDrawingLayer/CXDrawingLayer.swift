@@ -20,11 +20,29 @@ public enum CXDrawingMode {
     case auto
 }
 
+public enum CXDrawingContentsGravity {
+    case center
+    case top
+    case bottom
+    case left
+    case right
+    case topLeft
+    case topRight
+    case bottomLeft
+    case bottomRight
+    case resize
+    case resizeAspect
+    case resizeAspectFill
+}
+
 public protocol CXDrawingLayerDelegate {
 
     var drawingParameter: Any? { get } // Always run on main thread.
 
-    func draw(rect: CGRect, in ctx: CGContext, scale: CGFloat, isFlipped: Bool, parameter: Any?, asynchronous: Bool)
+    func draw(rect: CGRect, in ctx: CGContext, scale: CGFloat, isFlipped: Bool,
+              contentsGravity: CXDrawingContentsGravity,
+              parameter: Any?,
+              asynchronous: Bool)
 }
 
 open class CXDrawingLayer: CALayer {
@@ -74,6 +92,7 @@ open class CXDrawingLayer: CALayer {
         let boundingBox = CGRect(origin: .zero, size: bounds.size)
         let isFlipped = isGeometryFlipped
         let drawingCount = _counter.getValue()
+        let contentsGravity = drawingContentsGravity
 
         let transaction = CXTransaction(handler: { [weak self] () -> Any? in
             guard let self = self else {
@@ -92,6 +111,7 @@ open class CXDrawingLayer: CALayer {
                                                                       in: ctx,
                                                                       scale: scale,
                                                                       isFlipped: isFlipped,
+                                                                      contentsGravity: contentsGravity,
                                                                       parameter: drawingParameter,
                                                                       asynchronous: true)
                 }
@@ -107,6 +127,7 @@ open class CXDrawingLayer: CALayer {
                                                                   in: ctx,
                                                                   scale: scale,
                                                                   isFlipped: isFlipped,
+                                                                  contentsGravity: contentsGravity,
                                                                   parameter: drawingParameter,
                                                                   asynchronous: true)
             }
@@ -146,6 +167,7 @@ open class CXDrawingLayer: CALayer {
                        in: ctx,
                        scale: scale,
                        isFlipped: isGeometryFlipped,
+                       contentsGravity: drawingContentsGravity,
                        parameter: delegate?.drawingParameter,
                        asynchronous: false)
 

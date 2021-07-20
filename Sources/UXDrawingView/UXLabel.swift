@@ -242,7 +242,8 @@ extension UXLabel: CXDrawingLayerDelegate {
         return UXLabelDrawingParameter(context: context, topLeft: topLeft)
     }
 
-    public func draw(rect: CGRect, in ctx: CGContext, scale: CGFloat, isFlipped: Bool, parameter: Any?, asynchronous: Bool) {
+    public func draw(rect: CGRect, in ctx: CGContext, scale: CGFloat, isFlipped: Bool,
+                     contentsGravity: CXDrawingContentsGravity, parameter: Any?, asynchronous: Bool) {
         guard let drawingParameter = parameter as? UXLabelDrawingParameter else {
             return
         }
