@@ -205,6 +205,10 @@ extension CXDrawingLayer {
     }
 
     private func cancelDrawing() {
+        guard !isDrawingInSerial else {
+            return
+        }
+        
         _counter.inc()
     }
 }
