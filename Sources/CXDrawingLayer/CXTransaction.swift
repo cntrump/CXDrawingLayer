@@ -11,21 +11,35 @@ import Foundation
 typealias CXTransactionHandler = () -> Any?
 typealias CXTransactionCompletionHandler = (_ value: Any?) -> Void
 
+private func concurrentQueue() -> DispatchQueue {
+    struct once {
+        static let queue = DispatchQueue(label: "queue.cx.transaction.concurrent",
+                                         qos: .userInitiated,
+                                         attributes: .concurrent)
+    }
+
+    return once.queue
+}
+
 class CXTransaction {
     private lazy var group = DispatchGroup()
-    private lazy var queue: DispatchQueue = {
-        let queue = DispatchQueue(label: "queue.cx.transaction", qos: .userInitiated)
-
-        return queue
-    }()
+    private var queue: DispatchQueue?
 
     private var value: Any?
     private var handler: CXTransactionHandler?
     private var completion: CXTransactionCompletionHandler?
 
-    init(handler: CXTransactionHandler?, completion: CXTransactionCompletionHandler?) {
+    init(handler: CXTransactionHandler?, onQueue queue: DispatchQueue? = nil, completion: CXTransactionCompletionHandler?) {
         self.handler = handler
+
+        if let queue = queue {
+            self.queue = queue
+        } else {
+            self.queue = concurrentQueue()
+        }
+
         self.completion = completion
+
         start()
     }
 
@@ -40,7 +54,7 @@ class CXTransaction {
     private func start() {
         var _self: CXTransaction? = self
         group.enter()
-        queue.async(group: group) {
+        queue?.async(group: group) {
             _self?.value = _self?.handler?()
             _self?.group.leave()
             _self = nil

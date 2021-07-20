@@ -29,6 +29,10 @@ public protocol CXDrawingLayerDelegate {
 
 open class CXDrawingLayer: CALayer {
 
+    private lazy var drawingQueue = DispatchQueue(label: "queue.cx.transaction.serial", qos: .userInitiated)
+
+    open var isDrawingInSerial = false
+
     open var drawingMode: CXDrawingMode = .auto
 
     @AtomicInt private var counter = 0
@@ -59,8 +63,10 @@ open class CXDrawingLayer: CALayer {
             return
         }
 
-        // `super.contents` not `self.contents`, unset `contents` directly.
-        super.contents = nil
+        if !isDrawingInSerial {
+            // `super.contents` not `self.contents`, unset `contents` directly.
+            super.contents = nil
+        }
 
         let transactionGroup = self.transactionGroup
         let drawingParameter = (delegate as? CXDrawingLayerDelegate)?.drawingParameter
@@ -69,7 +75,7 @@ open class CXDrawingLayer: CALayer {
         let isFlipped = isGeometryFlipped
         let drawingCount = _counter.getValue()
 
-        transactionGroup.add(transaction: CXTransaction(handler: { [weak self] () -> Any? in
+        let transaction = CXTransaction(handler: { [weak self] () -> Any? in
             guard let self = self else {
                 return nil
             }
@@ -114,13 +120,15 @@ open class CXDrawingLayer: CALayer {
             }
 
             return image
-        }, completion: { [weak self] (value) in
+        }, onQueue: isDrawingInSerial ? drawingQueue : nil) { [weak self] (value) in
             #if os(macOS)
             self?.contents = (value as? NSImage)
             #else
             self?.contents = (value as? UIImage)?.cgImage
             #endif
-        }))
+        }
+
+        transactionGroup.add(transaction: transaction)
     }
 
     open override func draw(in ctx: CGContext) {
