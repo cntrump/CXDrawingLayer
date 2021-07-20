@@ -44,6 +44,15 @@ open class UXDrawingView: NSView {
         invalidateIntrinsicContentSize()
         superview?.layoutSubtreeIfNeeded()
     }
+
+    open override func setNeedsDisplay(_ invalidRect: NSRect) {
+        super.setNeedsDisplay(invalidRect)
+        layer?.setNeedsDisplay()
+    }
+
+    open func setNeedsDisplay() {
+        setNeedsDisplay(bounds)
+    }
 }
 #else
 open class UXDrawingView: UIView {
@@ -71,6 +80,16 @@ open class UXDrawingView: UIView {
         setNeedsDisplay()
         invalidateIntrinsicContentSize()
         superview?.layoutIfNeeded()
+    }
+
+    open override func setNeedsDisplay(_ rect: CGRect) {
+        super.setNeedsDisplay(rect)
+        layer.setNeedsDisplay(rect)
+    }
+
+    open override func setNeedsDisplay() {
+        super.setNeedsDisplay()
+        layer.setNeedsDisplay(bounds)
     }
 }
 #endif
